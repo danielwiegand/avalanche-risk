@@ -38,6 +38,8 @@ daily_urls = pickle.load(open("daily_urls.p", "rb"))
     
 # DAILY "LAGEBERICHT"
 
+# TODO: Make the danger code integers when scraping
+
 warning_levels = pd.DataFrame([])
 
 for i, url in enumerate(daily_urls):
@@ -63,6 +65,6 @@ for i, url in enumerate(daily_urls):
 # Remove some days without danger levels
 warning_levels = warning_levels[warning_levels[9].isna()].loc[:,0:6]
 
-pickle.dump(warning_levels, open("warning_levels.p", "wb")) 
+pickle.dump(warning_levels, open("../data/warning_levels.p", "wb")) 
 
-warning_levels.to_csv("warnstufen_archiv.csv")
+warning_levels.to_csv("../data/warnstufen_archiv.csv")
