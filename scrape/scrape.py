@@ -40,34 +40,29 @@ daily_urls = pickle.load(open("daily_urls.p", "rb"))
 
 warning_levels = pd.DataFrame([])
 
-for i, url in enumerate(daily_urls[0:1]):
+for i, url in enumerate(daily_urls):
     print(f"Processing url {i+1} out of {len(daily_urls)}")
     r = requests.get(url, headers = HEADERS)
-    soup = BeautifulSoup(r.text)
-    date = "".join(re.findall(r"[0-9].+[0-9]{4}", soup.h4.text))
-    try:
-        danger_per_zone = {}
-        for zone, html_code in enumerate(soup.find(class_ = "panel-body").find_all("img")):
-            danger_code = "".join(re.findall(r"[0-9]", str(html_code.get("src"))))
-            danger_per_zone.setdefault(zone, danger_code)
-        warning_levels = warning_levels.append(pd.DataFrame(danger_per_zone, index = [date]))
-        print("Found values!")
-        
-    except AttributeError:
-        print("Skipping...")
-        continue
-    finally:
-        time.sleep(2)
-        
-        
-url = "http://asdasdasd.de"
+    if r.status_code == 200:
+        soup = BeautifulSoup(r.text)
+        images = soup.find(class_ = "panel-body").find_all("img")
+        if len(images) > 0:
+            date = "".join(re.findall(r"[0-9].+[0-9]{4}", soup.h4.text))
+            danger_per_zone = {}
+            for zone, html_code in enumerate(images):
+                danger_code = "".join(re.findall(r"[0-9]", str(html_code.get("src"))))
+                danger_per_zone.setdefault(zone+1, danger_code)
+            warning_levels = warning_levels.append(pd.DataFrame(danger_per_zone, index = [date]))
+            print("Found values!")
+            time.sleep(2)
+        else:
+            print("Skipping...")
+            time.sleep(2)
+            continue
 
-daily_urls[0:10]
+# Remove some days without danger levels
+warning_levels = warning_levels[warning_levels[9].isna()].loc[:,0:6]
 
-url = "https://www.lawinenwarndienst-bayern.de/res/archiv/lageberichte/lagebericht.php?id=2301&lb_zur=1367359200"
+pickle.dump(warning_levels, open("warning_levels.p", "wb")) 
 
-
-for zone, html in enumerate(soup.find(class_ = "panel-body").find_all("img")):
-    print(html)
-    
-soup.find(class_ = "panel-body").find_all("img")
+warning_levels.to_csv("warnstufen_archiv.csv")
