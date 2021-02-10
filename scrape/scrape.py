@@ -38,7 +38,7 @@ daily_urls = pickle.load(open("daily_urls.p", "rb"))
     
 # DAILY "LAGEBERICHT"
 
-# TODO: Make the danger code integers when scraping
+# TODO: Add winter season as level
 
 warning_levels = pd.DataFrame([])
 
