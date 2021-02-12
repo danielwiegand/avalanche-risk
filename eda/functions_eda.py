@@ -36,6 +36,7 @@ def show_data_overview(df):
     df.plot(kind = "hist", bins = 20)
     
 def plot_missing_values(df, labels, **kwargs): 
+    plt.tight_layout()
     fig, ax = plt.subplots()
     im = ax.imshow(df.isna().astype(int).to_numpy(), cmap = "magma", interpolation = "nearest", **kwargs)
     ax.set_xticks(np.arange(df.shape[1]))
@@ -62,8 +63,15 @@ def correlate_aggregate_per_day(df, warning_levels, agg_func, shift):
     return cor
 
 def compare_shift_correlations(df, warning_levels, max_shift, agg_func):
-    correlations = pd.DataFrame(index =  df.columns.tolist())
+    correlations = pd.DataFrame(index = df.columns.tolist())
     for shift in range(max_shift+1):
         correlation = correlate_aggregate_per_day(df, warning_levels, agg_func, shift = shift)
+        correlations = correlations.join(correlation)
+    return correlations
+
+def compare_agg_func_correlations(df, warning_levels, shift):
+    correlations = pd.DataFrame(index = df.columns.tolist())
+    for agg_func in ["mean", "max", "min", "sum"]:
+        correlation = correlate_aggregate_per_day(df, warning_levels, agg_func, shift)
         correlations = correlations.join(correlation)
     return correlations
