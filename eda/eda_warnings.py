@@ -33,6 +33,8 @@ df_long = df_long.rename(columns = {"zone": "Zone", "danger_level": "Warnstufe"}
 df_long["Saison"] = 1
 for i in range(2008, 2018, 1):
     df_long.Saison[df_long.index > f"{i}-08-01"] += 1
+    
+pickle.dump(df_long, open("../data/lawinenwarndienst/warning_levels_preprocessed.p", "wb"))
 
 # * Basic descriptive statistics
 df_zones_dangers
