@@ -8,23 +8,23 @@ import re
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from functions_general import import_weather_file
+from functions_general import import_files
 from matplotlib import pyplot as plt
 
 from functions_eda import (plot_correlations, plot_missing_values,
                            show_data_overview, correlate_aggregate_per_day, compare_shift_correlations, compare_agg_func_correlations)
 
-WEATHER_FILEPATH = "../data/lawinenwarndienst/weather_data/1-allgaeu/hochgrat-hoermoos/"
+from model.functions_model import preprocess_X_values
+
+# WEATHER_FILEPATH = "../data/lawinenwarndienst/weather_data/1-allgaeu/hochgrat-hoermoos/"
+WEATHER_FILEPATH = "../data/lawinenwarndienst/weather_data/1-allgaeu/fellhorn/1/"
 FILES = os.listdir(WEATHER_FILEPATH)
-METRICS = [re.findall(r"(?<=-).+(?=-)", file)[0] for file in FILES]
+METRICS = [re.findall(r"-(\D.*)-", file) for file in FILES]
 
 
 # * DATA IMPORT ###########################################
 
-dfs = [import_weather_file(WEATHER_FILEPATH, file) for file in FILES]
-data = dfs[0].join(dfs[1:])
-data = data.reindex(sorted(data.columns), axis=1)
-del dfs
+data = import_files(WEATHER_FILEPATH)
 
 warning_levels = pickle.load(open("../data/lawinenwarndienst/warning_levels_preprocessed.p", "rb"))
 warning_levels = warning_levels[(warning_levels.low_high == 1) & (warning_levels.Zone == "Allgäuer Alpen")][["Warnstufe"]].astype(int)
@@ -45,8 +45,11 @@ test = data[data.index >= "2017-08-01"]
 
 # * UNIVARIATE EXPLORATION ##################################
 
+# GS - Global radiation
+show_data_overview(train[["GS"]])
+
 # T0 - Surface temperature
-show_data_overview(train[["T0_86991032"]])
+show_data_overview(train[["T0"]])
 #? Monatsverlauf: Größere Schwankungen / Abstürze
 
 # WG - wind speed
@@ -58,7 +61,8 @@ show_data_overview(train[["WG.Boe_05100419"]])
 #? Bis zu 17% NAs
 
 # N - precipitation
-show_data_overview(train[["N_86991032"]])
+show_data_overview(train[["N"]])
+show_data_overview(train[["N.MengeParsivel"]])
 #? N ist wohl neuer Niederschlag pro Zeitfenster
 
 # LT - air temperature
@@ -106,7 +110,7 @@ show_data_overview(train[["LF_05100419"]]) # snow station
 #? Verteilung sehr linksschief; die meisten Werte bei 100%
 
 # HS - SNOW HEIGHT
-show_data_overview(train[["HS_86991032"]])
+show_data_overview(train[["HS"]])
 #? MW = 30, Median = 0
 
 # NW - PRECIPITATION BOOLEAN 
@@ -115,9 +119,17 @@ show_data_overview(train[["NW_05100419"]])
 #? In 6% Niederschlag
 
 # LT - AIR TEMPERATURE 
-show_data_overview(train[["LT_05100419"]]) # snow station
-show_data_overview(train[["LT_86991032"]]) # snow station
+show_data_overview(train[["LT"]])
 #? Viel Rauschen
+
+# WS - SNOW PILLOW WASSERSÄULE ???
+# The snow pillow measures the water equivalent of the snow pack based on hydrostatic pressure created by overlying snow.
+show_data_overview(train[["WS-kl"]])
+show_data_overview(train[["SW"]])
+
+# Status - ???
+show_data_overview(train[["Status"]])
+
 
 
 # * MULTIVARIATE EXPLORATION #####################
@@ -159,6 +171,19 @@ for agg_func in ["mean", "max", "min", "sum"]:
     fig = sns.heatmap(shift_corr, cmap = "coolwarm_r", annot = True)
     fig.figure.savefig(f"output/corr_shift_{agg_func}.png", dpi = 600, facecolor = 'white', transparent = False)
 #? Shift von 1 bis 2 hat stärkere Korrelationen als die Daten am selben Tag (logisch)
+
+def compare_agg_funcs(df, y):
+    agg_funcs = ["mean", "max", "min", "sum", "median"]
+    compare_agg_func = pd.DataFrame(columns = agg_funcs, index = df.columns)
+    for column in df:
+        for agg in agg_funcs:
+            prep = preprocess_X_values(df[[column]], agg_func = agg)
+            prep = prep.join(y).dropna(subset = y.columns)
+            compare_agg_func.loc[column, agg] = prep.corr()[y.columns[0]][0]
+    sns.heatmap(np.abs(compare_agg_func.fillna(0)), annot = True, cmap = "Greys")
+    return compare_agg_func
+compare_agg_funcs(train, warning_levels)
+#? mean erzielt insgesamt die besten Ergebnisse und ist für alle Variablen halbwegs ok
 
 # RELATION TO TARGET VARIABLE
 # Mean - shift 1

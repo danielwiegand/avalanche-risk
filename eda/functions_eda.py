@@ -35,12 +35,13 @@ def show_data_overview(df):
     print(f"\nValue counts:\n{df.iloc[:,0].value_counts(normalize = True, dropna = False)}\n")
     df.plot(kind = "hist", bins = 20)
     
-def plot_missing_values(df, labels, **kwargs): 
+def plot_missing_values(df, **kwargs): 
+    kwargs.setdefault("aspect", 0.004)
     plt.tight_layout()
     fig, ax = plt.subplots()
     im = ax.imshow(df.isna().astype(int).to_numpy(), cmap = "magma", interpolation = "nearest", **kwargs)
     ax.set_xticks(np.arange(df.shape[1]))
-    ax.set_xticklabels(labels, rotation = 90)
+    ax.set_xticklabels(df.columns, rotation = 90)
     return fig
 
 def plot_correlations(df, labels):

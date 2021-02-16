@@ -27,7 +27,7 @@ def separate_zones(df):
 
 df_long = separate_zones(df_zones_dangers)
 df_long = df_long[~(df_long["danger_level"] == "0")]
-df_long["zone"] = df_long["zone"].replace([1, 2, 3, 4, 5, 6], ["Allgäuer Alpen", "Ammergauer Alpen", "Werdenfelser Alpen", "Bayerische Voralpen", "Chiemgauer Alpen", "Berchtesgadener Alpen"])
+df_long["zone"] = df_long["zone"].replace([1, 2, 3, 4, 5, 6], ["allgaeu", "ammergau", "werdenfels", "voralpen", "chiemgau", "berchtesgaden"])
 df_long = df_long.rename(columns = {"zone": "Zone", "danger_level": "Warnstufe"})
 
 df_long["Saison"] = 1
