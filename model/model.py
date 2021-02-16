@@ -13,22 +13,41 @@ from eda.functions_eda import plot_correlations, plot_missing_values
 from functions_general import import_files, import_weather_file
 from matplotlib import pyplot as plt
 
-from functions_model import (fit_model, preprocess, evaluate_regression, evaluate_classification, preprocess_X_values, import_preprocess_region, import_preprocess_all_regions)
+from functions_model import (fit_model, preprocess, evaluate_regression, evaluate_classification, preprocess_X_values, import_preprocess_region, import_preprocess_multiple_regions)
+
 
 # * DATA IMPORT ###########################################
-regions = ['allgaeu', 'ammergau', 'werdenfels', 'voralpen', 'chiemgau','berchtesgaden']
-features = pickle.load(open("../data/lawinenwarndienst/intersecting_metrics.p", "rb")) # load intersecting metrics
 
-X_train, y_train, X_test, y_test = import_preprocess_region("allgaeu", features = features, agg_func = "mean", min_shift = 1, max_shift = 2, include_y = True, smote = True)
+# METRICS_PER_REGION = pickle.load(open("../data/lawinenwarndienst/metrics_per_region.p", "rb"))
+# REGIONS = ['allgaeu', 'ammergau', 'werdenfels', 'voralpen', 'chiemgau','berchtesgaden']
+# INTERSECTING_METRICS = pickle.load(open("../data/lawinenwarndienst/intersecting_metrics.p", "rb")) # load intersecting metrics
 
-X_train, y_train, X_test, y_test = import_preprocess_all_regions(features, agg_func = "mean", min_shift = 1, max_shift = 2, include_y = True, smote = True)
+# #? Import a single region
+
+# metrics = ["N", "HS", "N.MengeParsivel", "GS", "TS.060", "WS-kl", "T0", "LF", "LT", "WR", "WG", "LD"]
+
+# # ["HS_86991032", "LD_05100419", "LF_05100419", "LT_86991032", "N_86991032", "T0_86991032", "TS.060_86991032", "WG_05100419", "WR_05100419"]
+
+X_train, y_train, X_test, y_test = import_preprocess_region("allgaeu", metrics = metrics, agg_func = "mean", min_shift = 1, max_shift = 2, include_y = True, smote = True)
+
+
+#? Import several regions
+
+# [metric for metric in METRICS_PER_REGION["allgaeu"] if metric in METRICS_PER_REGION["ammergau"]]
+
+metrics = ["N", "TS.040", "HS", "GS", "T0", "LF", "LT", "WR", "WG"]
+regions = ["allgaeu", "ammergau", "werdenfels"]
+
+X_train, y_train, X_test, y_test = import_preprocess_multiple_regions(regions, metrics, agg_func = "mean", min_shift = 1, max_shift = 2, include_y = True, smote = True)
+
+y_train.value_counts()
 
 
 # * MODELING ################################################
 
 #! logreg parameter c. Like in support vector machines, smaller values specify stronger regularization.
 
-m, y_pred_reg, y_pred, residuals = fit_model("RandomForest", X_train, y_train, max_depth = 4)
+m, y_pred_reg, y_pred, residuals = fit_model("RandomForest", X_train, y_train, max_depth = 4, class_weight = "balanced", n_estimators = 100)
 
 # Für boosting:
 # m.fit(X_train, y_train)
@@ -44,7 +63,7 @@ m, y_pred_reg, y_pred, residuals = fit_model("RandomForest", X_train, y_train, m
 # evaluate_regression(m, y_train, y_pred_reg, X_train, y_train, scoring = "r2")
 
 # plot_tree(m, feature_names = X_train.columns) # für decisiontree
-# m.feature_importances_ # für catboost
+pd.DataFrame(m.feature_importances_, index = X_train.columns).plot(kind = "bar") # für RF / catboost
 
 evaluate_classification(m, y_train, y_pred, X_train, y_train, scoring = "accuracy")
 
