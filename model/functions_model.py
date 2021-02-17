@@ -3,13 +3,16 @@ import pickle
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from catboost import CatBoostClassifier
+import re
 from eda.functions_eda import plot_correlations, plot_missing_values
 from imblearn.over_sampling import SMOTE, SMOTENC
+from matplotlib import pyplot as plt
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.feature_selection import RFE
 from sklearn.impute import KNNImputer
 from sklearn.linear_model import (ElasticNet, Lasso, LinearRegression,
                                   LogisticRegression, Ridge)
+from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import (classification_report, confusion_matrix,
                              mean_squared_error, r2_score)
 from sklearn.model_selection import cross_val_score
@@ -93,7 +96,6 @@ def import_preprocess_region(region, metrics, agg_func, min_shift, max_shift, in
     na_list = X_test_raw.isna().sum() == len(X_test_raw)
     assert sum(na_list) == 0, f"X_test contains a feature with only NAs: {na_list.index[list(na_list).index(True)]}"
     
-    #! ich schaue in preprocess rein, um zu verstehen, ob es wirklich nur 14 mit 4.0 sind
     X_train, y_train = preprocess(X_train_raw, y_train_raw, agg_func = agg_func, min_shift = min_shift, max_shift = max_shift, include_y = include_y, smote = smote)
     
     X_test, y_test = preprocess(X_test_raw, y_test_raw, agg_func = agg_func, min_shift = min_shift, max_shift = max_shift, include_y = include_y, smote = False) # no smote for test data
@@ -144,7 +146,7 @@ def import_preprocess_multiple_regions(regions, metrics, agg_func, min_shift, ma
 def fit_model(model, X_train, y_train, **kwargs):
     
     if model == "LogisticRegression":
-        m = LogisticRegression(penalty = "elasticnet", class_weight = None, solver = "saga", random_state = 10, verbose = 10, l1_ratio = 1, **kwargs)
+        m = LogisticRegression(penalty = "elasticnet", class_weight = None, solver = "saga", random_state = 10, verbose = 10, **kwargs)
     elif model == "DecisionTree":
         m = DecisionTreeClassifier(max_depth = 3, random_state = 10, class_weight = None, **kwargs)
     elif model == "RandomForest":
@@ -157,25 +159,18 @@ def fit_model(model, X_train, y_train, **kwargs):
             random_state = 10,
             **kwargs)
     elif model == "LinearSVC":
-        m = LinearSVC(penalty = "l2", C = 1, class_weight = None, random_state = 10, **kwargs)
+        m = LinearSVC(penalty = "l2", class_weight = None, random_state = 10, **kwargs)
+    elif model == "NaiveBayes":
+        kwargs.setdefault("var_smoothing", 1e-9)
+        m = GaussianNB(**kwargs)
     elif model == "SVC":
-        m = SVC(C = 0.5, class_weight = None, random_state = 10, **kwargs)
-    # elif model == "Boost":
-    #     m = CatBoostClassifier(iterations = 1000,
-    #         learning_rate = 0.03, # default: 0.3
-    #         depth = 2, # default: 6
-    #         l2_leaf_reg = 5, # default: 3
-    #         model_size_reg = 5,
-    #         random_seed = 10,
-    #         class_weights = None,
-    #         silent = True,
-    #         **kwargs)
+        m = SVC(random_state = 10, **kwargs)
         
     m.fit(X_train, y_train)
     y_pred_reg = m.predict(X_train)
     y_pred_clas = m.predict(X_train).round()
     residuals = y_pred_reg - y_train
-    return m, y_pred_reg, y_pred_clas, residuals
+    return m, y_pred_clas, residuals
 
 def evaluate_regression(m, y_true, y_pred, X_train, y_train, **kwargs):
     print(f"MSE: {round(mean_squared_error(y_pred, y_true), 3)}\n")
@@ -190,3 +185,32 @@ def evaluate_classification(m, y_true, y_pred, X_train, y_train, **kwargs):
     cv = np.round(cross_val_score(estimator = m, X = X_train, y = y_train, cv = 5, verbose = 0, **kwargs), 3)
     print(f"CrossVal: {cv}\n")
     print(f"CrossVal mean: {np.mean(cv)}")
+
+def conduct_rfe(X, y, top_n):
+    rf = RandomForestClassifier(max_depth = 4, n_estimators = 100, random_state = 10)
+    logreg = LogisticRegression(penalty = "elasticnet", class_weight = None, solver = "saga", random_state = 10, verbose = 10, l1_ratio = 1)
+    
+    used_metrics = X.columns
+    result = pd.DataFrame()
+    result["metric"] = used_metrics
+    
+    for model in [rf, logreg]:
+        model_name = re.findall(r"[a-zA-Z]+", str(model))[0]
+        rfe = RFE(estimator = model, n_features_to_select = 10, verbose = 1)
+        rfe = rfe.fit(X, y)
+        result[f"ranking_{model_name}"] = rfe.ranking_
+    
+    result["average"] = result.iloc[:,1:3].mean(axis = 1)
+    result = result.sort_values(by = "average")
+    
+    plt.figure(figsize = (18,6))
+    sns.lineplot(data = result.melt(id_vars = "metric"), x = "metric", y = "value", hue = "variable")
+    plt.xticks(rotation = 90)
+    plt.ylabel("Rank")
+    plt.ylabel("Metric")
+    plt.tight_layout()
+    plt.savefig("../eda/output/rfe.png")
+    
+    output = result.iloc[:top_n,0].tolist()
+    
+    return output

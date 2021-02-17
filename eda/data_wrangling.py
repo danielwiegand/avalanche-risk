@@ -36,3 +36,21 @@ for region in FILEPATHS_PER_REGION.keys():
         region_df = region_df.join(data[columns_to_append])
     pickle.dump(region_df, open(f"../data/lawinenwarndienst/weather_data/pickles/{region}.p", "wb"))
     
+
+# Import the data from 2008 to 2012, which were delivered separately
+FILEPATHS_PER_REGION_before2012 = FILEPATHS_PER_REGION.copy()
+for region in FILEPATHS_PER_REGION_before2012:
+    for i, path in enumerate(FILEPATHS_PER_REGION_before2012[region]):
+        FILEPATHS_PER_REGION_before2012[region][i] = re.sub("weather_data", "weather_data_before_2012", path)
+
+for region in FILEPATHS_PER_REGION_before2012.keys():
+    region_df = pd.DataFrame(index = pd.date_range(start = "07-01-2008", end = "08-31-2012", freq = "10min")) # format: month-day-year!
+    region_df["region"] = region
+    for station in FILEPATHS_PER_REGION_before2012[region]:
+        print(f"Importing {station}...")
+        data = import_files(station)
+        columns_to_append = [column for column in data.columns if column not in region_df.columns]
+        region_df = region_df.join(data[columns_to_append])
+    pickle.dump(region_df, open(f"../data/lawinenwarndienst/weather_data_before_2012/pickles/{region}.p", "wb"))
+    
+# Merge data from before and after 2012

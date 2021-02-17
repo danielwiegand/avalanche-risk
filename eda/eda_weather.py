@@ -24,7 +24,8 @@ METRICS = [re.findall(r"-(\D.*)-", file) for file in FILES]
 
 # * DATA IMPORT ###########################################
 
-data = import_files(WEATHER_FILEPATH)
+# data = import_files(WEATHER_FILEPATH) # Can only import data from before or after 2012 separately, and only from one station. Better use the pickles files.
+data = pickle.load(open("../data/lawinenwarndienst/weather_data_before_2012/pickles/werdenfels.p", "rb"))
 
 warning_levels = pickle.load(open("../data/lawinenwarndienst/warning_levels_preprocessed.p", "rb"))
 warning_levels = warning_levels[(warning_levels.low_high == 1) & (warning_levels.Zone == "Allgäuer Alpen")][["Warnstufe"]].astype(int)
@@ -32,7 +33,7 @@ warning_levels = warning_levels[(warning_levels.low_high == 1) & (warning_levels
 
 # * MISSING VALUES #########################################
 
-fig = plot_missing_values(data, labels = sorted(METRICS), aspect = 0.00003)
+fig = plot_missing_values(data, aspect = 0.00003)
 fig.savefig("output/missing_values.png", dpi = 600, facecolor = 'white', transparent = False)
 
 
