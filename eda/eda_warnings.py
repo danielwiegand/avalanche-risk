@@ -80,17 +80,17 @@ def facet(data, color):
     data = data.groupby(["Zone"])["Warnstufe"].value_counts().unstack().fillna(0)
     sns.heatmap(data, cbar = False, square = False, annot = True, cmap = "flare", fmt = "0g")
     
-g = sns.FacetGrid(df_long, col = "Jahr", col_wrap = 4, size = 3)
+g = sns.FacetGrid(df_long[df_long["Jahr"] != 2008], col = "Jahr", col_wrap = 5, size = 3) # exclude 2008 to make image symmetrical
 g.map_dataframe(facet)
 g.set_axis_labels("Warnstufe", "")
-g.savefig("heatmap.png", dpi = 300, pad_inches = 0.8)
+g.savefig("data/heatmap.png", dpi = 300, pad_inches = 0.8)
 
 # Heatmap danger_level vs. zone depending on year
 def facet(data, color):
     data = data.groupby(["Zone"])["Warnstufe"].value_counts(normalize = True).unstack().fillna(0)
     sns.heatmap(data, cbar = False, square = False, annot = True, cmap = "flare", fmt = ".0%")
     
-g = sns.FacetGrid(df_long, col = "Jahr", col_wrap = 4, size = 3)
+g = sns.FacetGrid(df_long[df_long["Jahr"] != 2008], col = "Jahr", col_wrap = 5, size = 3)
 g.map_dataframe(facet)
 g.set_axis_labels("Warnstufe", "")
-g.savefig("heatmap_prozent.png", dpi = 300, pad_inches = 0.8)
+g.savefig("data/heatmap_prozent.png", dpi = 300, pad_inches = 0.8)

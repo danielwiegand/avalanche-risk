@@ -25,7 +25,7 @@ METRICS = [re.findall(r"-(\D.*)-", file) for file in FILES]
 # * DATA IMPORT ###########################################
 
 # data = import_files(WEATHER_FILEPATH) # Can only import data from before or after 2012 separately, and only from one station. Better use the pickles files.
-data = pickle.load(open("../data/lawinenwarndienst/weather_data_before_2012/pickles/werdenfels.p", "rb"))
+data = pickle.load(open("../data/lawinenwarndienst/weather_data/pickles/allgaeu.p", "rb"))
 
 warning_levels = pickle.load(open("../data/lawinenwarndienst/warning_levels_preprocessed.p", "rb"))
 warning_levels = warning_levels[(warning_levels.low_high == 1) & (warning_levels.Zone == "Allgäuer Alpen")][["Warnstufe"]].astype(int)
@@ -45,6 +45,23 @@ test = data[data.index >= "2017-08-01"]
 
 
 # * UNIVARIATE EXPLORATION ##################################
+
+# Graphic for presentation
+train_subset = train.loc["20140701":"20150630",["WG", "LD", "LT", "HS"]].reset_index().melt(id_vars = "index")
+plot = sns.relplot(data = train_subset, y = "value", x = "index", col = "variable", col_wrap = 2, facet_kws = dict(sharey = False, sharex = False), kind = "line")
+plot.fig.subplots_adjust(top=0.9)
+plot.fig.autofmt_xdate()
+plot.fig.suptitle('Selected variables at yearly resolution', fontsize=22)
+plot.savefig('output/overview_year.png', transparent = True)
+
+train_subset = train.loc["20140101":"20140201",["WG", "LD", "LT", "HS"]].reset_index().melt(id_vars = "index")
+train_subset["index"] = pd.to_datetime(train_subset["index"])
+plot = sns.relplot(data = train_subset, y = "value", x = "index", col = "variable", col_wrap = 2, facet_kws = dict(sharey = False, sharex = False), kind = "line")
+# plot.set_xticklabels(rotation = 90)
+plot.fig.subplots_adjust(top=0.9)
+plot.fig.autofmt_xdate()
+plot.fig.suptitle('Selected variables at monthly resolution', fontsize=22)
+plot.savefig('output/overview_month.png', transparent = True)
 
 # GS - Global radiation
 show_data_overview(train[["GS"]])

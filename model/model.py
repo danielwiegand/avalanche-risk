@@ -21,9 +21,11 @@ METRICS_PER_REGION = pickle.load(open("../data/lawinenwarndienst/metrics_per_reg
 # REGIONS = ['allgaeu', 'ammergau', 'werdenfels', 'voralpen', 'chiemgau','berchtesgaden']
 INTERSECTING_METRICS = pickle.load(open("../data/lawinenwarndienst/intersecting_metrics.p", "rb")) # load intersecting metrics
 
-# #? Import a single region
+#? Import a single region
 
-metrics = [metric for metric in list(set(METRICS_PER_REGION["allgaeu"])) if metric not in ["LS.unten.berechnet", "Nsgew", "LS.berechnet", "LS.Rohdaten", "LS.unten.Rohdaten"]]
+all_metrics_allgaeu = [metric for metric in list(set(METRICS_PER_REGION["allgaeu"])) if metric not in ["LS.berechnet", "LS.Rohdaten", "Nsgew", "LS.unten.Rohdaten", "LS.unten.berechnet"]]
+
+# metrics = [metric for metric in list(set(METRICS_PER_REGION["allgaeu"])) if metric not in ["LS.unten.berechnet", "Nsgew", "LS.berechnet", "LS.Rohdaten", "LS.unten.Rohdaten"]]
 metrics = ["N.MengeParsivel", "N", "SW", "GS", "LT", "HS", "TS.100", "WG.Boe", "TS.080", "LF"]
 
 # ["HS_86991032", "LD_05100419", "LF_05100419", "LT_86991032", "N_86991032", "T0_86991032", "TS.060_86991032", "WG_05100419", "WR_05100419"]
@@ -47,29 +49,31 @@ X_train, y_train, X_test, y_test = import_preprocess_region("allgaeu", metrics =
 
 # * MODELING ################################################
 
-m, y_pred, residuals = fit_model("RandomForest", X_train, y_train, max_depth = 4)
+m, y_pred, residuals = fit_model("SVC", X_train, y_train) # , min_samples_split = 80, min_samples_leaf = 80, 
+
+evaluate_classification(m, y_train, y_pred, X_train, scoring = "accuracy")
 
 
-#! VOTING CLASSIFIER
+# #! VOTING CLASSIFIER
 
-from sklearn.ensemble import RandomForestClassifier, VotingClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.naive_bayes import GaussianNB
-from sklearn.svm import SVC
+# from sklearn.ensemble import RandomForestClassifier, VotingClassifier
+# from sklearn.linear_model import LogisticRegression
+# from sklearn.naive_bayes import GaussianNB
+# from sklearn.svm import SVC
 
 
-m1 = LogisticRegression(penalty = "elasticnet", class_weight = None, solver = "saga", random_state = 10, verbose = 10, l1_ratio = 1)
+# m1 = LogisticRegression(penalty = "elasticnet", class_weight = None, solver = "saga", random_state = 10, verbose = 10, l1_ratio = 1)
 
-m2 = RandomForestClassifier(n_estimators = 100, random_state = 10, n_jobs = -1, max_depth = 4)
+# m2 = RandomForestClassifier(n_estimators = 100, random_state = 10, n_jobs = -1, max_depth = 4)
 
-m3 = SVC(C = 0.5, class_weight = None, random_state = 10)
+# m3 = SVC(C = 0.5, class_weight = None, random_state = 10)
 
-m = VotingClassifier(estimators = [('lr', m1), 
-                                   ('rf', m2), 
-                                   ('svm', m3)], 
-                     voting = 'hard')
+# m = VotingClassifier(estimators = [('lr', m1), 
+#                                    ('rf', m2), 
+#                                    ('svm', m3)], 
+#                      voting = 'hard')
 
-m.fit(X_train, y_train)
+# m.fit(X_train, y_train)
 
 # y_pred = voting.predict(X_train)
 # voting.score(X_train, y_train)
@@ -88,13 +92,26 @@ m.fit(X_train, y_train)
 
 evaluate_classification(m, y_train, y_pred, X_train, y_train, scoring = "accuracy")
 
+
+# #! delete later
+# from sklearn.metrics import (classification_report, confusion_matrix,
+#                              mean_squared_error, r2_score)
+
+# ax = sns.heatmap(confusion_matrix(y_pred, y_train), cmap = "Greys", annot = True, fmt = "d", xticklabels = "1234", yticklabels = "1234")
+# ax.set(xlabel = "ypred", ylabel = "ytrue")
+# ax.figure.savefig("confusion_baseline.png")
+
+# print(classification_report(y_train, y_pred))
+
+#!
+
 # Precision: Percentage of positive classified observations that are positive
 # Recall: Percentage of positive observations correctly classified as positive
 
 
 
 
-#! DEEP LEARNING
+# #! DEEP LEARNING
 
 y_train_label_encoded = y_train - 1
 
@@ -134,9 +151,9 @@ plt.plot(history.history['val_accuracy'])
 y_pred = pd.DataFrame(m.predict_classes(X_train)) + 1
 
 
-print(classification_report(y_train, y_pred))
-ax = sns.heatmap(confusion_matrix(y_pred, y_train), cmap = "Greys", annot = True, fmt = "d", xticklabels = "1234", yticklabels = "1234")
-ax.set(xlabel = "ytrue", ylabel = "ypred")
+# print(classification_report(y_train, y_pred))
+# ax = sns.heatmap(confusion_matrix(y_pred, y_train), cmap = "Greys", annot = True, fmt = "d", xticklabels = "1234", yticklabels = "1234")
+# ax.set(xlabel = "ypred", ylabel = "ytrue")
 
 
 

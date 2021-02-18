@@ -178,11 +178,11 @@ def evaluate_regression(m, y_true, y_pred, X_train, y_train, **kwargs):
     print(f"CrossVal: {np.round(cross_val_score(estimator = m, X = X_train, y = y_train, cv = 5, **kwargs), 3)}\n")
     print(f"CrossVal mean: {round(np.mean(cross_val_score(estimator = m, X = X_train, y = y_train, cv = 5, **kwargs)), 3)}")
     
-def evaluate_classification(m, y_true, y_pred, X_train, y_train, **kwargs):
+def evaluate_classification(m, y_true, y_pred, X_train, **kwargs):
     print(classification_report(y_true, y_pred))
     ax = sns.heatmap(confusion_matrix(y_pred, y_true), cmap = "Greys", annot = True, fmt = "d", xticklabels = "1234", yticklabels = "1234")
-    ax.set(xlabel = "ytrue", ylabel = "ypred")
-    cv = np.round(cross_val_score(estimator = m, X = X_train, y = y_train, cv = 5, verbose = 0, **kwargs), 3)
+    ax.set(xlabel = "ypred", ylabel = "ytrue")
+    cv = np.round(cross_val_score(estimator = m, X = X_train, y = y_true, cv = 5, verbose = 0, **kwargs), 3)
     print(f"CrossVal: {cv}\n")
     print(f"CrossVal mean: {np.mean(cv)}")
 
