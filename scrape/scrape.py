@@ -1,3 +1,6 @@
+"""Webscraping lawinenwarndienst-bayern.de/ to get historic avalanche danger levels
+"""
+
 import re
 import requests
 from bs4 import BeautifulSoup

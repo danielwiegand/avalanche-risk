@@ -1,8 +1,13 @@
+"""Exploratory data analysis with the avalanche warning data
+"""
+
 import pickle
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 import seaborn as sns
+
+from functions_eda import separate_zones
 
 df = pickle.load(open("../data/lawinenwarndienst/warning_levels.p", "rb"))
 
@@ -14,17 +19,7 @@ df_zones = df["2018-04-09":"2008-02-03"]
 # Only retain the two first digits (warning levels)
 df_zones_dangers = df_zones.replace(r".{3}$", "", regex = True)
 
-def separate_zones(df):
-    output = pd.DataFrame()
-    for i in df:
-        zone = df[i].str.split("", expand = True).iloc[:,1:3]
-        zone = zone.melt(ignore_index = False, var_name = "low_high", value_name = "danger_level")
-        zone["zone"] = i
-        # zone["zone"] = i
-        output = output.append(zone)
-    output["Jahr"] = output.index.year
-    return output
-
+# Do some replacements, add season variable and pickle result
 df_long = separate_zones(df_zones_dangers)
 df_long = df_long[~(df_long["danger_level"] == "0")]
 df_long["zone"] = df_long["zone"].replace([1, 2, 3, 4, 5, 6], ["allgaeu", "ammergau", "werdenfels", "voralpen", "chiemgau", "berchtesgaden"])
@@ -76,7 +71,7 @@ z = df_long.groupby(["Zone"])["Warnstufe"].value_counts().unstack()
 sns.heatmap(data = z, cmap = "flare", annot = True, fmt = "d")
 
 # Heatmap danger_level vs. zone depending on year
-def facet(data, color):
+def facet(data):
     data = data.groupby(["Zone"])["Warnstufe"].value_counts().unstack().fillna(0)
     sns.heatmap(data, cbar = False, square = False, annot = True, cmap = "flare", fmt = "0g")
     

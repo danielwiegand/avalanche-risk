@@ -1,3 +1,6 @@
+"""Functions for testing by means of pytest
+"""
+
 import sys
 
 sys.path.append("/home/daniel/Schreibtisch/Projekte/avalanche-risk")

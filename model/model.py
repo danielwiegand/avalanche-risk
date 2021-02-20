@@ -1,3 +1,5 @@
+"""Import and preprocess predictors and target variables, run a model, evaluate it and predict on a test set."""
+
 import sys
 
 sys.path.append("/home/daniel/Schreibtisch/Projekte/avalanche-risk")
@@ -23,24 +25,20 @@ INTERSECTING_METRICS = pickle.load(open("../data/lawinenwarndienst/intersecting_
 
 #? Import a single region
 
-all_metrics_allgaeu = [metric for metric in list(set(METRICS_PER_REGION["allgaeu"])) if metric not in ["LS.berechnet", "LS.Rohdaten", "Nsgew", "LS.unten.Rohdaten", "LS.unten.berechnet"]]
+# all_metrics_allgaeu = [metric for metric in list(set(METRICS_PER_REGION["allgaeu"])) if metric not in ["LS.berechnet", "LS.Rohdaten", "Nsgew", "LS.unten.Rohdaten", "LS.unten.berechnet"]]
 
-# metrics = [metric for metric in list(set(METRICS_PER_REGION["allgaeu"])) if metric not in ["LS.unten.berechnet", "Nsgew", "LS.berechnet", "LS.Rohdaten", "LS.unten.Rohdaten"]]
-metrics = ["N.MengeParsivel", "N", "SW", "GS", "LT", "HS", "TS.100", "WG.Boe", "TS.080", "LF"]
+metrics_rfe = ["N.MengeParsivel", "N", "SW", "GS", "LT", "HS", "TS.100", "WG.Boe", "TS.080", "LF"]
 
-# ["HS_86991032", "LD_05100419", "LF_05100419", "LT_86991032", "N_86991032", "T0_86991032", "TS.060_86991032", "WG_05100419", "WR_05100419"]
-
-X_train, y_train, X_test, y_test = import_preprocess_region("allgaeu", metrics = metrics, agg_func = "mean", min_shift = 1, max_shift = 2, include_y = True, smote = True)
+X_train, y_train, X_test, y_test = import_preprocess_region("allgaeu", metrics = metrics_rfe, agg_func = "mean", min_shift = 1, max_shift = 2, include_y = True, smote = True)
 
 #? Import several regions
 
 # set([metric for metric in METRICS_PER_REGION["allgaeu"] if metric in METRICS_PER_REGION["ammergau"]])
-# metrics = ["N", "GS", "LT", "HS", "TS.100", "WG.Boe", "TS.080", "LF", "WG"]
+# metrics = ["N", "GS", "LT", "HS", "TS.100", "WG.Boe", "TS.080", "LF", "WG", "TS.000", "WR"]
 # regions = ["allgaeu", "ammergau"]
 
-# X_train, y_train, X_test, y_test = import_preprocess_multiple_regions(regions, metrics, agg_func = "mean", min_shift = 1, max_shift = 2, include_y = True, smote = True)
+# X_train, y_train, X_test, y_test = import_preprocess_multiple_regions(regions, metrics, agg_func = "mean", min_shift = 1, max_shift = 3, include_y = True, smote = True)
 
-# y_train.value_counts()
 
 # * RFE #####################################################
  
@@ -49,97 +47,86 @@ X_train, y_train, X_test, y_test = import_preprocess_region("allgaeu", metrics =
 
 # * MODELING ################################################
 
-m, y_pred, residuals = fit_model("SVC", X_train, y_train) # , min_samples_split = 80, min_samples_leaf = 80, 
-
-evaluate_classification(m, y_train, y_pred, X_train, scoring = "accuracy")
-
-
-# #! VOTING CLASSIFIER
-
-# from sklearn.ensemble import RandomForestClassifier, VotingClassifier
-# from sklearn.linear_model import LogisticRegression
-# from sklearn.naive_bayes import GaussianNB
-# from sklearn.svm import SVC
-
-
-# m1 = LogisticRegression(penalty = "elasticnet", class_weight = None, solver = "saga", random_state = 10, verbose = 10, l1_ratio = 1)
-
-# m2 = RandomForestClassifier(n_estimators = 100, random_state = 10, n_jobs = -1, max_depth = 4)
-
-# m3 = SVC(C = 0.5, class_weight = None, random_state = 10)
-
-# m = VotingClassifier(estimators = [('lr', m1), 
-#                                    ('rf', m2), 
-#                                    ('svm', m3)], 
-#                      voting = 'hard')
-
-# m.fit(X_train, y_train)
-
-# y_pred = voting.predict(X_train)
-# voting.score(X_train, y_train)
+m, y_pred, residuals = fit_model("RandomForest", X_train, y_train, max_depth = 4) 
 
 
 # * EVALUATION ##############################################
 
 # Coefficients
-# pd.DataFrame(m.coef_, index = X_train.columns).plot(kind = "bar")
-# pd.DataFrame(m.coef_, columns = X_train.columns).plot(kind = "bar")
+pd.DataFrame(m.coef_, columns = X_train.columns).plot(kind = "bar")
 
-# evaluate_regression(m, y_train, y_pred_reg, X_train, y_train, scoring = "r2")
+pd.DataFrame(m.feature_importances_, index = X_train.columns).plot(kind = "bar") # für RF / catboost
 
-# plot_tree(m, feature_names = X_train.columns) # für decisiontree
-# pd.DataFrame(m.feature_importances_, index = X_train.columns).plot(kind = "bar") # für RF / catboost
-
-evaluate_classification(m, y_train, y_pred, X_train, y_train, scoring = "accuracy")
+evaluate_classification(m, y_train, y_pred, X_train, scoring = "accuracy")
 
 
-# #! delete later
-# from sklearn.metrics import (classification_report, confusion_matrix,
-#                              mean_squared_error, r2_score)
+# * PREDICTION ##############################################
 
-# ax = sns.heatmap(confusion_matrix(y_pred, y_train), cmap = "Greys", annot = True, fmt = "d", xticklabels = "1234", yticklabels = "1234")
-# ax.set(xlabel = "ypred", ylabel = "ytrue")
-# ax.figure.savefig("confusion_baseline.png")
+y_pred_test = m.predict(X_test)
 
-# print(classification_report(y_train, y_pred))
-
-#!
-
-# Precision: Percentage of positive classified observations that are positive
-# Recall: Percentage of positive observations correctly classified as positive
+evaluate_classification(m, y_test, y_pred_test, X_test, scoring = "accuracy")
 
 
 
+# ? ANNEX ##################################################
 
-# #! DEEP LEARNING
+
+# * VOTING CLASSIFIER
+
+from sklearn.ensemble import RandomForestClassifier, VotingClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import GaussianNB
+from sklearn.svm import SVC
+
+m1 = LogisticRegression(penalty = "elasticnet", class_weight = None, solver = "saga", random_state = 10, verbose = 10, l1_ratio = 1)
+
+m2 = RandomForestClassifier(n_estimators = 100, random_state = 10, n_jobs = -1, max_depth = 4)
+
+m3 = SVC(C = 0.5, class_weight = None, random_state = 10)
+
+m = VotingClassifier(estimators = [('lr', m1), 
+                                   ('rf', m2), 
+                                   ('svm', m3)], 
+                     voting = 'hard')
+
+m.fit(X_train, y_train)
+
+y_pred = m.predict(X_train)
+m.score(X_train, y_train)
+
+evaluate_classification(m, y_train, y_pred, X_train, scoring = "accuracy")
+
+
+# * DEEP LEARNING #########################################
 
 y_train_label_encoded = y_train - 1
 
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Activation, BatchNormalization, Dense, Dropout
 from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.optimizers import Adam
 
 from sklearn.metrics import (classification_report, confusion_matrix,
                              mean_squared_error, r2_score)
 
 input_shape = (X_train.shape[1],)
 
-m = Sequential([ # sequenzielle Ordnung der Layer
-    # Layer 1
-    Dense(units = 10, activation = 'elu', input_shape = input_shape),
+m = Sequential([
+    Dense(units = 5, activation = 'elu', input_shape = input_shape),
     Dropout(rate = 0.2),
+    BatchNormalization(),
     Dense(units = 10, activation = 'elu'),
-    Dropout(rate = 0.2),
     Dense(units = 4, activation = 'softmax')
 ])
 
 m.summary()
 
-earlystopping = EarlyStopping(monitor = 'val_loss', patience = 5)
+earlystopping = EarlyStopping(monitor = 'val_loss', patience = 20)
 
-m.compile(optimizer = 'adam', loss = 'sparse_categorical_crossentropy', metrics = ['accuracy'])
+opt = Adam(learning_rate = 0.005)
+m.compile(optimizer = opt, loss = 'sparse_categorical_crossentropy', metrics = ['accuracy'])
 
-history = m.fit(X_train, y_train_label_encoded, batch_size = 50, epochs = 500, validation_split = 0.3)
+history = m.fit(X_train, y_train_label_encoded, batch_size = 50, epochs = 500, validation_split = 0.2, callbacks = [earlystopping])
 
 plt.plot(history.history['loss'], label='training_loss')
 plt.plot(history.history['val_loss'], label='validation_loss')
@@ -150,13 +137,9 @@ plt.plot(history.history['val_accuracy'])
 
 y_pred = pd.DataFrame(m.predict_classes(X_train)) + 1
 
-
-# print(classification_report(y_train, y_pred))
-# ax = sns.heatmap(confusion_matrix(y_pred, y_train), cmap = "Greys", annot = True, fmt = "d", xticklabels = "1234", yticklabels = "1234")
-# ax.set(xlabel = "ypred", ylabel = "ytrue")
-
-
-
+print(classification_report(y_train, y_pred))
+ax = sns.heatmap(confusion_matrix(y_pred, y_train), cmap = "Greys", annot = True, fmt = "d", xticklabels = "1234", yticklabels = "1234")
+ax.set(xlabel = "ypred", ylabel = "ytrue")
 
 
 

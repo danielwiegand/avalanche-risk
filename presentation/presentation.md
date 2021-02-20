@@ -38,7 +38,7 @@ Daniel Wiegand
 
 ![bg left:33%](data/avalanche.webp)
 
-* Predict regional avalanche danger level with more than 50% accuracy
+* Predict regional avalanche danger level from weather data with more than 50% accuracy
 * Identify the most important variables determining risk
 
 ---
@@ -94,11 +94,10 @@ Daniel Wiegand
 
 --- 
 
-## Baseline model
+<!-- ## Baseline model
 
-![width:700px](data/confusion_baseline.png)
+<!-- ![width:700px](data/confusion_baseline.png) -->
 
----
 
 ## Possible improvements
 
@@ -108,6 +107,14 @@ Daniel Wiegand
 * Data upsampling (imbalanced target variable)
 * Use data from other stations
 * Account for autocorrelation
+
+---
+
+## Improved models
+
+| Model | Features | TimeShift | SMOTE | Acc | ValAcc | F1_4
+| ----- | ----- | ----- | ----- | ----- | ----- | ----- |
+| LogReg | all | 1 | no | 0.67 | 0.63 | 0.55 |
 
 ---
 
@@ -180,25 +187,34 @@ This looks like a AR(1) process!
 | LogReg | rfe | 1-2 | yes | yes | 0.85 | 0.80 | 0.96 |
 | RF | rfe | 1-2 | yes | yes | 0.87 | 0.84 | 0.96 |
 
-* Other models tried: Support Vector Machine, Neural Network
+* Other models tried: SVM, FF-NN, Voting Classifier, Grad Boosting
 
 ---
 
 ## Final model
 
-![width:700px](data/confusion_final.png)
+![width:1200px](data/confusion_both.png)
 
 ---
 
 # Conclusion
 
 * The avalanche warning level can be modeled from weather data alone with about 70% accuracy
-* Taking into account autocorrelation, accuracy can be improved to 80%
-* Potential reason for difference to true values: No evaluation of snow profiles / no access to "local knowledge"
+* Taking into account autocorrelation, accuracy can be improved to 84%
+* Most important variables seem to be precipitation of prior days, air / snow temperature, snow height, wind velocity
 
 ![bg right:33%](data/avalanche2.jpeg)
 
 ---
+
+<!-- # Further improvements
+
+* Take into account data from other regions
+* Different aggregations per variable
+* Try an explicit auto"regression" model
+
+![bg right:33%](data/avalanche2.jpeg) -->
+
 <!-- _class: lead -->
 # Thank you! :)
 
