@@ -15,7 +15,7 @@ from functions_general import import_files
 from matplotlib import pyplot as plt
 
 from functions_eda import (plot_correlations, plot_missing_values,
-                           show_data_overview, compare_agg_funcs, correlate_aggregate_per_day, compare_shift_correlations, compare_agg_func_correlations)
+                           show_data_overview, correlate_aggregate_per_day, compare_shift_correlations, compare_agg_func_correlations)
 
 from model.functions_model import preprocess_X_values
 
@@ -165,10 +165,11 @@ def compare_agg_funcs(df, y):
             prep = preprocess_X_values(df[[column]], agg_func = agg)
             prep = prep.join(y).dropna(subset = y.columns)
             compare_agg_func.loc[column, agg] = prep.corr()[y.columns[0]][0]
-    sns.heatmap(np.abs(compare_agg_func.fillna(0)), annot = True, cmap = "Greys")
+    fig = sns.heatmap(np.abs(compare_agg_func.fillna(0)), annot = True, cmap = "Greys")
+    fig.figure.savefig(f"output/compare_aggregations.png", dpi = 300, transparent = False)
     return compare_agg_func
 
-compare_agg_funcs(train, warning_levels)
+compare_agg_funcs(train.iloc[:,1:], warning_levels)
 
 # RELATION TO TARGET VARIABLE
 # Mean - shift 1
