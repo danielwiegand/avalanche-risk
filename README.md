@@ -6,28 +6,29 @@ Every year, avalanches cause fatalities in mountainious regions. In Bavaria (sou
 
 ![Avalanche risk scores for six different regions in Bavaria (example from https://www.lawinenwarndienst-bayern.de/res/start_winter.php)](eda/output/regions.png)
 
-Goal of this project is a) to model the avalanche danger score per region by means of aggregated weather data and b) to identify the most important variables determining avalanche risk.
+Goal of this project is a) to model the avalanche danger score per region by means of aggregated weather data and b) to identify the most important variables determining avalanche risk. The following figure shows the steps of this project and some Python packages used.
 
-![Chart showing the project plan](eda/output/flowchart.png)
-
-This figure shows the different steps of this project and some Python packages used.
+![Chart showing the project plan](eda/output/flowchart.jpg)
 
 ## How to use this code
 
 The Python code to model the avalanche risk scores can be downloaded from this GitHub repository. 
 
 **Data**
-Historical avalanche warning levels can be web-scraped from the Lawinenwarndienst web page by means of the code under `scrape`. In order to reproduce the modeling process, however, historical weather data have to be obtained from Lawinenwarndienst Bayern. These data cannot be shared here without permission.
+
+Historical avalanche warning levels can be web-scraped from the Lawinenwarndienst web page by means of the code under `scrape`. In order to reproduce the modeling process, however, historical weather data has to be obtained from Lawinenwarndienst Bayern. These data cannot be shared here without permission.
 
 **EDA**
-The eda folder contains `eda_warnings.py` which provides summary statistics and plotting for the historical avalanche warning levels, and ?`eda_weather.py` which does the same thing for historical weather data. The results are also shown below.
+
+The eda folder contains `eda_warnings.py` which provides summary statistics and plotting for the historical avalanche warning levels, and `eda_weather.py` which does the same thing for historical weather data. The results are also shown below.
 
 **Preprocessing and modeling**
+
 The folder `model` contains `model.py` which contains the code to model avalanche risk scores. Note: Because the modeling process requires tweaking many different parameter combinations, this file should be adapted and executed line by line in an IDE.
 
 ## Available data
 
-Historical avalanche danger levels are available on https://www.lawinenwarndienst-bayern.de/res/archiv/lageberichte/. They can be web-scraped by means of the code available under `scrape`.
+Historical avalanche danger levels are available at https://www.lawinenwarndienst-bayern.de/res/archiv/lageberichte/. They can be web-scraped by means of the code available under `scrape`.
 
 Historical weather data were requested from Lawinenwarndienst Bayern. This authority collects weather data specifically for understanding avalanche risk at several weather stations throughout the Bavarian alps.
 
@@ -53,11 +54,11 @@ Metrics:
 * Water fraction of snow bands (WAN)
 * Density of snow bands (RHO)
 
-Available metrics differ from station to station, but often have a significant overlap for basis metrics like amount of precipitation (N), wind speed (WG) or snow height (HS).
+Available metrics differ from weather station to weather station, but often have a significant overlap for basis metrics like amount of precipitation (N), wind speed (WG) or snow height (HS).
+
+The following example shows the metrics wind speed (WG), air pressure (LD), air temperature (LT) and snow height (HS) over the course of a month (left) and some years (right). It is clearly visible that some variables follow a seasonal pattern (e.g. snow height, air temperature), while others (e.g. wind speed) are much more noisy.
 
 ![Example showing some metrics](eda/output/overview_data.png)
-
-This example shows the metrics wind speed (WG), air pressure (LD), air temperature (LT) and snow height (HS) over the course of a month (left) and some years (right). It is clearly visible that some variables follow a seasonal pattern (e.g. snow height, air temperature), while others (e.g. wind speed) are much more noisy.
 
 ## Outcome
 
@@ -65,26 +66,24 @@ This example shows the metrics wind speed (WG), air pressure (LD), air temperatu
 
 **Avalanche risk scores**
 
-![Barplot of avalanche risk levels per zone and year](eda/output/warning_levels_perc.png)
-
 The distribution of warning levels is clearly unbalanced in every year and every region, with warning levels 1 and to being most prominent. Level 3 occurs frequently in some years (e.g. in 2009) but less frequently in others (e.g. 2014). Risk level 4 appears in less than 10 percent in all years. Risk level 5 was never reported in Bavaria.
 
-![Barplot of avalanche risk levels per zone and year](eda/output/warning_levels_perc.png)
+![Heatmap of avalanche risk levels per region and year](eda/output/warning_levels_perc.png)
 
 
 **Weather data**
 
-![Correlations between the predictors](eda/output/correlations.png)
-
 Some of the weather variables are closely correlated with each other. Red values indicate negative correlation, blue values indicate positive correlation.
 
-![Correlations of different aggregations with target variable](eda/output/compare_aggregations.png)
+![Correlations between the predictors](eda/output/correlations.png)
 
 The available weather data shows a significantly higher time resolution (10 minutes), compared to the time resolution of the avalanche risk which is updated only daily. Therefore, the weather-related data had to be aggregated to daily levels. The correlation between differently aggregated weather data (mean, max, min, median and sum) and the target variable were compared; the results show that weather data aggregated through a "mean" function shows the highest correlation with the target variable. Therefore, this aggregation was used for the modeling process.
 
-![Correlations between target variable and predictors, back-shifted by some days](eda/output/correlation_shift.png)
+![Correlations of different aggregations with target variable](eda/output/compare_aggregations.png)
 
 The warning levels of a day is associated with weather data from preceding days. This figure shows the correlation (values and colors) between predictors (y axis) and the target variable, broken down by time lag (x axis). It is clearly visible that the avalanche warning of a day is associated with weather data of the preceding days, most notable of the two days before ("day1" and "day2" on the x axis).
+
+![Correlations between target variable and predictors, back-shifted by some days](eda/output/correlation_shift.png)
 
 ### Modeling
 
