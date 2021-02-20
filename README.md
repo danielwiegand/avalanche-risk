@@ -6,7 +6,7 @@ Every year, avalanches cause fatalities in mountainious regions. In Bavaria (sou
 
 ![Avalanche risk scores for six different regions in Bavaria (example from https://www.lawinenwarndienst-bayern.de/res/start_winter.php)](eda/output/regions.png)
 
-Goal of this project is a) to model the avalanche danger score per region by means of aggregated weather data and b) to identify the most important variables determining avalanche risk. The following figure shows the steps of this project and some Python packages used.
+Goal of this project are a) to model the avalanche danger score per region by means of aggregated weather data and b) to identify the most important variables determining avalanche risk. The following figure shows the steps of this project and some Python packages used.
 
 ![Chart showing the project plan](eda/output/flowchart.jpg)
 
@@ -66,7 +66,7 @@ The following example shows the metrics wind speed (WG), air pressure (LD), air 
 
 **Avalanche risk scores**
 
-The distribution of warning levels is clearly unbalanced in every year and every region, with warning levels 1 and to being most prominent. Level 3 occurs frequently in some years (e.g. in 2009) but less frequently in others (e.g. 2014). Risk level 4 appears in less than 10 percent in all years. Risk level 5 was never reported in Bavaria.
+The distribution of warning levels is clearly unbalanced in every year and every region, with warning levels 1 and 2 being most abundant. Level 3 occurs frequently in some years (e.g. in 2009) but less frequently in others (e.g. 2014). Risk level 4 appears in less than 10 percent in all years. Risk level 5 was never reported in Bavaria.
 
 ![Heatmap of avalanche risk levels per region and year](eda/output/warning_levels_perc.png)
 
@@ -93,11 +93,11 @@ A baseline model (Naive Bayes) trained on all predictor variables (exluding thos
 
 By means of a **recursive feature elimination**, the most relevant variables can be determined. RFE was executed by means of a Random Forest and a Logistic Regression, and the average of their results was taken.
 
-![Outcome of the recursive feature elimination](eda/output/correlation_shift.png)
+![Outcome of the recursive feature elimination](eda/output/rfe.png)
 
-While Random Forest and Logistic Regression sometimes show disagreement over the importance of a predictor, some variables do nevertheless seem to be more important than others (N, SW, GS, LT, HS, TS etc.) The sometimes contradicting result of the two algorithms might be due to strong correlations between some predictors which could lead to "arbitrary" choices between them through the algorithm.
+While Random Forest and Logistic Regression sometimes show disagreement over the importance of a predictor, some variables do nevertheless seem to be more important than others (N, SW, GS, LT, HS, TS etc.) The sometimes contradicting result of the two algorithms might be due to strong correlations between some predictors which could lead to "arbitrary" choices between them by the algorithm.
 
-Due to the large imbalance of the target variable (with higher risk levels being significantly underrepresented), the minority classes were oversamples by means of **SMOTE** (Synthetic minority oversampling technique). This greatly helped in stabiliting the results across the target variable classes.
+Due to the large imbalance of the target variable (with higher risk levels being significantly underrepresented), the minority classes were oversampled by means of **SMOTE** (Synthetic minority oversampling technique). This greatly helped in stabiliting the results across the target variable classes.
 
 Even when including many predictor variables, the residuals of the predictions still show some autocorrelation. Including the time-lag of the target variable to the predictors increases the model's performance significantly.
 
